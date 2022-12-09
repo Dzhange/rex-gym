@@ -25,7 +25,8 @@ class PolicyPlayer:
             self.signal_type = flag_mapper.DEFAULT_SIGNAL[self.env_id]
         policy_id = f"{self.env_id}_{self.signal_type}"
         policy_path = flag_mapper.ENV_ID_TO_POLICY[policy_id][0]
-        policy_dir = os.path.join(self.gym_dir_path, policy_path)
+        # policy_dir = os.path.join(self.gym_dir_path, policy_path)
+        policy_dir = os.path.join("/home/ge/YuGroup/locomotion/rex_stuff/rex-gym/", policy_path)
         config = utility.load_config(policy_dir)
         policy_layers = config.policy_layers
         value_layers = config.value_layers
