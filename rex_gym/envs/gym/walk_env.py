@@ -143,7 +143,8 @@ class RexWalkEnv(rex_gym_env.RexGymEnv):
             base_x = .0
         if not self._target_position or self._random_pos_target:
             bound = -3 if self.backwards else 3
-            self._target_position = random.uniform(bound//2, bound)
+            # self._target_position = random.uniform(bound//2, bound)
+            self._target_position = 2.5
             self._random_pos_target = True
         if self._is_render and self._signal_type == 'ik':
             if self.load_ui:
@@ -353,12 +354,17 @@ class RexWalkEnv(rex_gym_env.RexGymEnv):
         self._true_observation = np.array(observation)
         return self._true_observation
 
-    def _get_observation(self):
+    def _get_observation(self, render=True):
         observation = []
         roll, pitch, _ = self.rex.GetBaseRollPitchYaw()
         roll_rate, pitch_rate, _ = self.rex.GetBaseRollPitchYawRate()
         observation.extend([roll, pitch, roll_rate, pitch_rate])
-        self._observation = np.array(observation)
+                
+        depth_1d = self.render_neck('depth', render).reshape(-1)
+                    
+        # self._observation = np.array(observation)
+        self._observation = np.concatenate([np.array(observation), depth_1d])
+        # self._observation = {"kinematics": np.array(observation), "depth":depth }
         return self._observation
 
     def _get_observation_upper_bound(self):
@@ -371,6 +377,7 @@ class RexWalkEnv(rex_gym_env.RexGymEnv):
         upper_bound = np.zeros(self._get_observation_dimension())
         upper_bound[0:2] = 2 * math.pi  # Roll, pitch, yaw of the base.
         upper_bound[2:4] = 2 * math.pi / self._time_step  # Roll, pitch, yaw rate.
+        upper_bound[4:] = 100
         return upper_bound
 
     def _get_observation_lower_bound(self):

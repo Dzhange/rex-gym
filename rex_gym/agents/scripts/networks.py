@@ -82,6 +82,8 @@ class ForwardGaussianPolicy(tf.contrib.rnn.RNNCell):
         self._mean_weights_initializer = mean_weights_initializer
         self._logstd_initializer = logstd_initializer
 
+        self._encoder_layers = (200, 100)
+
     @property
     def state_size(self):
         unused_state_size = 1
@@ -92,21 +94,32 @@ class ForwardGaussianPolicy(tf.contrib.rnn.RNNCell):
         return self._action_size, self._action_size, tf.TensorShape([])
 
     def __call__(self, observation, state):
-        with tf.compat.v1.variable_scope('policy'):
-            x = tf.contrib.layers.flatten(observation)
-            for size in self._policy_layers:
-                x = tf.contrib.layers.fully_connected(x, size, tf.nn.relu)
-            mean = tf.contrib.layers.fully_connected(x,
-                                                     self._action_size,
-                                                     tf.tanh,
-                                                     weights_initializer=self._mean_weights_initializer)
-            logstd = tf.compat.v1.get_variable('logstd', mean.shape[1:], tf.float32, self._logstd_initializer)
-            logstd = tf.tile(logstd[None, ...], [tf.shape(mean)[0]] + [1] * logstd.shape.ndims)
-        with tf.compat.v1.variable_scope('value'):
-            x = tf.contrib.layers.flatten(observation)
-            for size in self._value_layers:
-                x = tf.contrib.layers.fully_connected(x, size, tf.nn.relu)
-            value = tf.contrib.layers.fully_connected(x, 1, None)[:, 0]
+        with tf.compat.v1.variable_scope('encoded'):        
+            def encode_observation(observation):
+                kines = observation[:, :4]
+                # kines = tf.contrib.layers.fully_connected(kines, 40, tf.nn.relu)
+                depth = observation[:, 4:]
+                depth = tf.contrib.layers.fully_connected(depth, 50, tf.nn.relu)
+                depth = tf.contrib.layers.fully_connected(depth, 4, tf.nn.relu)
+                observation = tf.concat([kines, depth], axis=1)
+                return observation
+            # observation = tf.cond(observation.shape[1] > tf.Tensor(4.), lambda: encode_observation(observation), lambda: observation)
+            observation = encode_observation(observation)
+            with tf.compat.v1.variable_scope('policy'):
+                x = tf.contrib.layers.flatten(observation)           
+                for size in self._policy_layers:
+                    x = tf.contrib.layers.fully_connected(x, size, tf.nn.relu)
+                mean = tf.contrib.layers.fully_connected(x,
+                                                        self._action_size,
+                                                        tf.tanh,
+                                                        weights_initializer=self._mean_weights_initializer)
+                logstd = tf.compat.v1.get_variable('logstd', mean.shape[1:], tf.float32, self._logstd_initializer)
+                logstd = tf.tile(logstd[None, ...], [tf.shape(mean)[0]] + [1] * logstd.shape.ndims)
+            with tf.compat.v1.variable_scope('value'):
+                x = tf.contrib.layers.flatten(observation)
+                for size in self._value_layers:
+                    x = tf.contrib.layers.fully_connected(x, size, tf.nn.relu)
+                value = tf.contrib.layers.fully_connected(x, 1, None)[:, 0]
         return (mean, logstd, value), state
 
 

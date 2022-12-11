@@ -7,6 +7,7 @@ import platform
 
 import gym
 import tensorflow.compat.v1 as tf
+import time
 
 from rex_gym.agents.tools import wrappers
 from rex_gym.agents.scripts import configs, utility
@@ -27,6 +28,10 @@ class Trainer:
         else:
             env_signal = flag_mapper.DEFAULT_SIGNAL[env_id]
         self.env_id = f"{env_id}_{env_signal}"
+        
+        timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')        
+        full_logdir = os.path.expanduser(os.path.join(self.log_dir, '{}-{}'.format(timestamp, self.env_id)))
+        self.full_logdir = full_logdir
 
     def _create_environment(self, config):
         """Constructor for an instance of the environment.
@@ -118,20 +123,19 @@ class Trainer:
         # not checkpointed and thus new episodes start after resuming.
         saver = utility.define_saver(exclude=(r'.*_temporary/.*',))
         sess_config = tf.ConfigProto(allow_soft_placement=True)
-        sess_config.gpu_options.allow_growth = True
+        sess_config.gpu_options.allow_growth = True        
         with tf.Session(config=sess_config) as sess:
             utility.initialize_variables(sess, saver, config.logdir)
+            writer = tf.summary.FileWriter(self.full_logdir, sess.graph)            
             for score in loop.run(sess, saver, total_steps):
                 yield score
         batch_env.close()
 
     def start_training(self):
         """Create configuration and launch the trainer."""
-        utility.set_up_logging()
-        timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-        full_logdir = os.path.expanduser(os.path.join(self.log_dir, '{}-{}'.format(timestamp, self.env_id)))
-        config = AttrDict(getattr(configs, self.env_id)())
-        config = utility.save_config(config, full_logdir)
+        utility.set_up_logging()        
+        config = AttrDict(getattr(configs, self.env_id)())        
+        config = utility.save_config(config, self.full_logdir)
         os_name = platform.system()
         enable_processes = False if os_name == 'Windows' else True
         for score in self._train(config, enable_processes):
