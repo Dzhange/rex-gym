@@ -19,17 +19,19 @@ ROBOT_INIT_POSITION = {
     'random': [0, 0, 0.21]
 }
 
+HEIGHT_RANGE = 0.035
+TERRAIN_SIZE = 256
 
 class Terrain:
 
-    def __init__(self, terrain_source, terrain_id, columns=256, rows=256):
-        random.seed(10)
+    def __init__(self, terrain_source, terrain_id, columns=TERRAIN_SIZE, rows=TERRAIN_SIZE):
+        # random.seed(10)
         self.terrain_source = terrain_source
         self.terrain_id = terrain_id
-        self.columns = columns
-        self.rows = rows
+        self.columns = TERRAIN_SIZE
+        self.rows = TERRAIN_SIZE
 
-    def generate_terrain(self, env, height_perturbation_range=0.05):
+    def generate_terrain(self, env, height_perturbation_range=HEIGHT_RANGE):
         env.pybullet_client.setAdditionalSearchPath(pd.getDataPath())
         env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 0)
         height_perturbation_range = height_perturbation_range
@@ -81,7 +83,7 @@ class Terrain:
         env.pybullet_client.changeVisualShape(terrain, -1, rgbaColor=[1, 1, 1, 1])
         # env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 1)
 
-    def update_terrain(self, height_perturbation_range=0.05):
+    def update_terrain(self, height_perturbation_range=HEIGHT_RANGE):
         if self.terrain_source == flag_mapper.TERRAIN_TYPE['random']:
             terrain_data = [0] * self.columns * self.rows
             for j in range(int(self.columns / 2)):

@@ -119,13 +119,8 @@ class Loop(object):
       Reported mean scores.
     """
         global_step = sess.run(self._step)
-        steps_made = 1
-        # start = time.time()
-        # cnt = 1
-        while True:                          
-            # cnt += 1  
-            # if steps_made % 1 == 0:
-                # print((time.time()-start)/cnt)
+        steps_made = 1        
+        while True:
             if max_step and global_step >= max_step:
                 break
             phase, epoch, steps_in = self._find_current_phase(global_step)

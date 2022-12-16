@@ -3,6 +3,7 @@
 """
 import math
 import random
+import time
 
 from gym import spaces
 import numpy as np
@@ -144,7 +145,7 @@ class RexWalkEnv(rex_gym_env.RexGymEnv):
         if not self._target_position or self._random_pos_target:
             bound = -3 if self.backwards else 3
             # self._target_position = random.uniform(bound//2, bound)
-            self._target_position = 2.5
+            self._target_position = 30
             self._random_pos_target = True
         if self._is_render and self._signal_type == 'ik':
             if self.load_ui:
@@ -208,9 +209,12 @@ class RexWalkEnv(rex_gym_env.RexGymEnv):
     def _check_target_position(self, t):
         if self._target_position:
             current_x = abs(self.rex.GetBasePosition()[0])
+            current_y = abs(self.rex.GetBasePosition()[1])
             # give 0.15 stop space
+            print("CUR: ",  (current_x**2 + current_y**2)**0.5)
             if current_x >= abs(self._target_position) - 0.15:
                 self.goal_reached = True
+                print("End: ", time.time())
                 if not self.is_terminating:
                     self.end_time = t
                     self.is_terminating = True
@@ -260,7 +264,7 @@ class RexWalkEnv(rex_gym_env.RexGymEnv):
             step = -.3
             period = .5
             base_x = .0
-        if self._is_render and self._is_debug:
+        if self._is_render and self._is_debug and 0:
             position, orientation, step_length, step_rotation, step_angle, step_period = \
                 self._read_inputs(base_pos_coeff, gait_stage_coeff)
         else:

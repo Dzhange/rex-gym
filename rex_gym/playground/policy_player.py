@@ -42,6 +42,7 @@ class PolicyPlayer:
                                                      checkpoint=checkpoint)
             sum_reward = 0
             observation = env.reset()
+            print("Start: ", time.time())
             while True:
                 action = agent.get_action([observation])
                 observation, reward, done, _ = env.step(action[0])
