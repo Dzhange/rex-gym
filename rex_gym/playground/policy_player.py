@@ -1,14 +1,16 @@
 r"""Running a pre-trained ppo agent on rex environments"""
+from datetime import datetime
 import logging
 import os
 import site
 import time
 
+
 import tensorflow.compat.v1 as tf
 from rex_gym.agents.scripts import utility
 from rex_gym.agents.ppo import simple_ppo_agent
 from rex_gym.util import flag_mapper
-
+from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
 class PolicyPlayer:
     def __init__(self, env_id: str, args: dict, signal_type: str):
@@ -33,6 +35,7 @@ class PolicyPlayer:
         env = config.env(render=True, **self.args)
         network = config.network
         checkpoint = os.path.join(policy_dir, flag_mapper.ENV_ID_TO_POLICY[policy_id][1])
+
         with tf.Session() as sess:
             agent = simple_ppo_agent.SimplePPOPolicy(sess,
                                                      env,
@@ -46,8 +49,14 @@ class PolicyPlayer:
             while True:
                 action = agent.get_action([observation])
                 observation, reward, done, _ = env.step(action[0])
+                
+                # recorder.capture_frame()
+
+                
+                
                 time.sleep(0.002)
                 sum_reward += reward
                 logging.info(f"Reward={sum_reward}")
                 if done:
                     break
+            # recorder.close()            

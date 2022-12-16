@@ -19,7 +19,7 @@ ROBOT_INIT_POSITION = {
     'random': [0, 0, 0.21]
 }
 
-HEIGHT_RANGE = 0.035
+HEIGHT_RANGE = 0.027
 TERRAIN_SIZE = 256
 
 class Terrain:
