@@ -211,10 +211,10 @@ class RexWalkEnv(rex_gym_env.RexGymEnv):
             current_x = abs(self.rex.GetBasePosition()[0])
             current_y = abs(self.rex.GetBasePosition()[1])
             # give 0.15 stop space
-            print("CUR: ",  (current_x**2 + current_y**2)**0.5)
+            # print("CUR: ",  (current_x**2 + current_y**2)**0.5)
             if current_x >= abs(self._target_position) - 0.15:
                 self.goal_reached = True
-                print("End: ", time.time())
+                # print("End: ", time.time())
                 if not self.is_terminating:
                     self.end_time = t
                     self.is_terminating = True
@@ -364,7 +364,8 @@ class RexWalkEnv(rex_gym_env.RexGymEnv):
         roll_rate, pitch_rate, _ = self.rex.GetBaseRollPitchYawRate()
         observation.extend([roll, pitch, roll_rate, pitch_rate])
                 
-        depth_1d = self.render_neck('depth', render).reshape(-1)
+        # depth_1d = self.render_neck('depth', render).reshape(-1)
+        depth_1d = self.render_front('depth', render).reshape(-1)
                     
         # self._observation = np.array(observation)
         self._observation = np.concatenate([np.array(observation), depth_1d])

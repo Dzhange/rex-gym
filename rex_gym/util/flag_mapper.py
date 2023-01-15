@@ -32,5 +32,6 @@ TERRAIN_TYPE = {
     'maze': 'png',
     'hills': 'csv',
     'random': 'random',
-    'plane': 'plane'
+    'plane': 'plane',
+    'stair':'stair'
 }

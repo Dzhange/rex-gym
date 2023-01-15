@@ -442,36 +442,24 @@ class RexGymEnv(gym.Env):
         rgb_array = rgb_array[:, :, :3]
         return rgb_array
 
-    def render_neck(self, mode="rgb_array",render=True):
+    def render_front(self, mode="rgb_array",render=True):
         """
         Take image from the robot's perspective
         """
-
         if not render:
             return self.last_view
 
         base_pos = self.rex.GetBasePosition()
         base_orient = self.rex.GetBaseOrientation()
-
-        neck_vec = np.array([0.0, 0, -0.2])
-        # neck_vec = np.array([-0.3, 0, 0])
+        neck_vec = np.array([-0.2, 0, -0.2])
         rot_mat = self._pybullet_client.getMatrixFromQuaternion(
             base_orient)
         rot_mat = np.array(rot_mat).reshape((3, 3))
         head_position = (rot_mat.dot(neck_vec.T)).T + base_pos
 
-        # neck_vec = r.apply(neck_vec)
-        # gase_dir = r.apply(gase_dir)
-        # head_position = base_pos + neck_vec
-        # gase_position = head_position + gase_dir
-
         view_matrix = self._pybullet_client.computeViewMatrixFromYawPitchRoll(
             cameraTargetPosition=head_position,
             distance=0.1,
-            # distance=self._cam_dist * 0.2,
-            # yaw=90,
-            # pitch=-30,
-            # roll=0,
             yaw=-90,
             pitch=-90,
             roll=0,
@@ -485,7 +473,68 @@ class RexGymEnv(gym.Env):
         (_, _, px, dp, _) = self._pybullet_client.getCameraImage(
             width=DEPTH_RENDER_WIDTH,
             height=DEPTH_RENDER_HEIGHT,
-            # renderer=self._pybullet_client.ER_TINY_RENDERER,
+            renderer=self._pybullet_client.ER_BULLET_HARDWARE_OPENGL,
+            viewMatrix=view_matrix,
+            projectionMatrix=proj_matrix)
+
+        #TODO: camera intrinsic should be generated from matrices above
+        # intrin = open3d.camera.PinholeCameraIntrinsic()
+        # intrin.set_intrinsics(width=RENDER_WIDTH, height=RENDER_HEIGHT, fx=1, fy=1, cx=0, cy=0)
+
+        rgb_array = np.array(px)
+        rgb_array = rgb_array[:, :, :3]
+        depth_array = np.array(dp)
+
+        self.last_view = depth_array
+        if 0:
+            pcd = get_point_cloud(depth=depth_array, width=DEPTH_RENDER_WIDTH, height=DEPTH_RENDER_HEIGHT,\
+                                 view_matrix=view_matrix, proj_matrix=proj_matrix)
+            write_pointcloud(pcd, '/home/ge/YuGroup/locomotion/rex_stuff/rex-gym-mine/outputs/pcds/demo_{}.xyz'.format(time.time()))
+
+        if mode == "rgb_array":
+            return rgb_array
+        elif mode == "rgb_depth":
+            return rgb_array, depth_array
+        elif mode == "depth":
+            return depth_array
+        else:
+            return np.array([])
+
+
+
+    def render_neck(self, mode="rgb_array",render=True):
+        """
+        Take image from the robot's perspective
+        """
+
+        if not render:
+            return self.last_view
+
+        base_pos = self.rex.GetBasePosition()
+        base_orient = self.rex.GetBaseOrientation()
+
+        neck_vec = np.array([0.0, 0, -0.2])
+        rot_mat = self._pybullet_client.getMatrixFromQuaternion(
+            base_orient)
+        rot_mat = np.array(rot_mat).reshape((3, 3))
+        head_position = (rot_mat.dot(neck_vec.T)).T + base_pos        
+
+        view_matrix = self._pybullet_client.computeViewMatrixFromYawPitchRoll(
+            cameraTargetPosition=head_position,
+            distance=0.1,            
+            yaw=-90,
+            pitch=-90,
+            roll=0,
+            upAxisIndex=2)
+
+        proj_matrix = self._pybullet_client.computeProjectionMatrixFOV(fov=60,
+                                                                       aspect=float(DEPTH_RENDER_WIDTH) / DEPTH_RENDER_HEIGHT,
+                                                                       nearVal=0.01,
+                                                                       farVal=5.0)
+
+        (_, _, px, dp, _) = self._pybullet_client.getCameraImage(
+            width=DEPTH_RENDER_WIDTH,
+            height=DEPTH_RENDER_HEIGHT,            
             renderer=self._pybullet_client.ER_BULLET_HARDWARE_OPENGL,
             viewMatrix=view_matrix,
             projectionMatrix=proj_matrix)
